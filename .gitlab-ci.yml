@@ -19,23 +19,26 @@ deploy:artifactory:
   script:
     - ./gradlew publish
 
-
 git:branchmanagement:
   extends: .gradle_template
   script:
+    # Only perform the branching when this is SNAPSHOT version on the main branch.
     - BRANCH=$(git branch --show-current)
     - PROJECTVERSION=$(./gradlew properties | grep version)
-    - if [[ ("$BRANCH" == "main" || "$BRANCH" == "master") && $PROJECTVERSION =~ "SNAPSHOT" ]]; then exit 0; fi
+    - if [[ ("$BRANCH" == "main" || "$BRANCH" == "master") && ! ($PROJECTVERSION =~ "SNAPSHOT") ]]; then exit 0; fi
+    # Set up SSH keys and so forth
     - ./gradlew configureReleaseBot
+    # Create a new commit on the main branch
     - ./gradlew
       removeSnapshotFromVersion
       updateVersionNumberInReadme
       gitCommitForRelease
       createGitTagForVersion
+    # Create a new commit on the development branch for the next version
     - ./gradlew
       switchToDevelopmentAndCatchItUp
       prepareNextSnapshotVersion
       updateVersionNumberInReadme
       gitCommitForSnapshot
-      createGitTagForVersion
+    # Push all of that to git
     - ./gradlew gitPush
