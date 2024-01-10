@@ -113,7 +113,8 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Commits all changed files with a note that a release occured.'
 
             doLast {
-                sh "git commit -a -m '[grt] release v${MVN_RELEASE_VERSION}'"
+                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                sh "git commit -a -m '[grt] release v${version}'"
             }
         }
 
@@ -127,7 +128,8 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Commits all changed files with a note that this is the next development version.'
 
             doLast {
-                sh "git commit -a -m '[grt] prepare for next development iteration (v${MVN_RELEASE_VERSION})'"
+                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                sh "git commit -a -m '[grt] prepare for next development iteration (v${version})'"
             }
         }
 
