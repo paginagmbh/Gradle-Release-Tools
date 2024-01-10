@@ -30,14 +30,15 @@ gradlePlugin {
     }
 }
 
+def artifactory_url = "https://bintray.pagina.gmbh/artifactory"
 publishing {
     repositories {
         maven {
-            url = version.endsWith('SNAPSHOT') ? "${artifactory_url}/plugins-snapshot-local" : "${artifactory_url}/plugins-release-local"
-            name = version.endsWith('SNAPSHOT') ? "PaginaArtifactoryLocalPluginsSnapshots" : "PaginaArtifactoryLocalPluginsReleased"
+            url = "https://bintray.pagina.gmbh/artifactory/" + (version.endsWith('SNAPSHOT') ? "plugins-snapshot-local" : "plugins-release-local")
+            name = "PaginaArtifactoryLocalPlugins" + (version.endsWith('SNAPSHOT') ? "Snapshots" : "Released")
             credentials {
-                username = "${artifactory_user}"
-                password = "${artifactory_password}"
+                username = System.getenv("ARTIFACTORY_USER")
+                password = System.getenv("ARTIFACTORY_PASSWORD")
             }
         }
     }

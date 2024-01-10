@@ -30,12 +30,10 @@ class GradleReleaseTools implements Plugin<Project> {
                 sh 'apt install ca-certificates'
                 // Install ssh-agent if not already installed, it is required by Docker.
                 sh 'which ssh-agent || ( apt install openssh-client -y )'
-                // Run ssh-agent (inside the build environment)
-                sh 'eval $(ssh-agent -s)'
 
                 // Add the SSH key stored in RELEASE_BOT_SSH_PRIVATE_KEY variable to the agent store
                 sh 'chmod 600 ${RELEASE_BOT_SSH_PRIVATE_KEY}'
-                sh 'ssh-add ${RELEASE_BOT_SSH_PRIVATE_KEY}'
+                sh 'eval `ssh-agent -s`; ssh-add ${RELEASE_BOT_SSH_PRIVATE_KEY}'
                 // For Docker builds disable host key checking.
                 // Be aware that by adding that you are susceptible to man-in-the-middle attacks.
                 // This skips the 'add device fingerprint 12:34:56:78:9a:bc:de:f0 to known hosts?'
