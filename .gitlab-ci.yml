@@ -7,14 +7,14 @@ variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
 
-# Cache downloaded dependencies and plugins between builds
-# and use our global maven cache 'one-maven-cache-to-rule-them-all'
-cache:
-  key: one-parsx-cache-to-rule-them-all
-  untracked: false
-  paths:
-    - .m2/repository
-    - .gradle/
+# # Cache downloaded dependencies and plugins between builds
+# # and use our global maven cache 'one-maven-cache-to-rule-them-all'
+# cache:
+#   key: one-parsx-cache-to-rule-them-all
+#   untracked: false
+#   paths:
+#     - .m2/repository
+#     - .gradle/
 
 
 
@@ -26,36 +26,45 @@ cache:
     - cp .gitlab-ci/artifactory-access/init.gradle $GRADLE_USER_HOME
 
 
-
 deploy:artifactory:
   extends: .gradle_template
   script:
     - ./gradlew publish
 
-git:branchmanagement:
+
+git:release:
   extends: .gradle_template
   only:
     - main
   script:
     # Only perform the branching when this is SNAPSHOT version on the main branch.
-    - BRANCH=$(git branch --show-current)
-    - ./gradlew tasks --debug
     - PROJECTVERSION=$(./gradlew properties | grep version)
     - if [[ ! ($PROJECTVERSION =~ "SNAPSHOT") ]]; then exit 0; fi
     # Set up SSH keys and so forth
-    - ./gradlew configureReleaseBot
+    - ./gradlew configureReleaseBot --debug
     # Create a new commit on the main branch
     - ./gradlew
       removeSnapshotFromVersion
       updateVersionNumberInReadme
       gitCommitForRelease
       createGitTagForVersion
+      gitPush
+
+
+git:prepearesnapshot:
+  extends: .gradle_template
+  only:
+    - main
+  script:
+    # Only perform the branching when this is not a SNAPSHOT version on the main branch.
+    - PROJECTVERSION=$(./gradlew properties | grep version)
+    - if [[ $PROJECTVERSION =~ "SNAPSHOT" ]]; then exit 0; fi
+    # Set up SSH keys and so forth
+    - ./gradlew configureReleaseBot
     # Create a new commit on the development branch for the next version
     - ./gradlew
       switchToDevelopmentAndCatchItUp
       prepareNextSnapshotVersion
       updateVersionNumberInReadme
       gitCommitForSnapshot
-      --debug
-    # Push all of that to git
-    - ./gradlew gitPush
+      gitPush

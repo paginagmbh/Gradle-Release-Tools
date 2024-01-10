@@ -27,25 +27,35 @@ class GradleReleaseTools implements Plugin<Project> {
 
                 // SSL Certificates are missing by default in some docker containers
                 sh 'apt update -y'
-                sh 'apt install ca-certificates'
+                sh 'apt install ca-certificates -y'
                 // Install ssh-agent if not already installed, it is required by Docker.
-                sh 'which ssh-agent || ( apt install openssh-client -y )'
+                // sh 'which ssh-agent || ( apt install openssh-client -y )'
 
                 // Add the SSH key stored in RELEASE_BOT_SSH_PRIVATE_KEY variable to the agent store
-                sh 'chmod 600 ${RELEASE_BOT_SSH_PRIVATE_KEY}'
-                sh 'eval `ssh-agent -s`; ssh-add ${RELEASE_BOT_SSH_PRIVATE_KEY}'
+                sh 'mkdir -p ~/.ssh'
+                sh 'cp $RELEASE_BOT_SSH_PRIVATE_KEY ~/.ssh/id_rsa'
+                sh 'chmod 600 ~/.ssh/id_rsa'
+                // generate missing private key
+                sh 'ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub'
                 // For Docker builds disable host key checking.
                 // Be aware that by adding that you are susceptible to man-in-the-middle attacks.
                 // This skips the 'add device fingerprint 12:34:56:78:9a:bc:de:f0 to known hosts?'
-                sh 'mkdir -p ~/.ssh'
-                sh 'echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+                sh 'touch ~/.ssh/config'
+                new File("${System.properties['user.home']}/.ssh/config").append('Host *\n\tStrictHostKeyChecking no\n\n')
+                // sh 'echo -e -- \'Host *\\n\\tStrictHostKeyChecking no\\n\\n\' > ~/.ssh/config'
 
                 // set username and email for our CI Release Bot
                 sh 'git config --global user.name "CI Release Bot"'
                 sh 'git config --global user.email "gitlab-release-bot@pagina.gmbh"'
                 // set push remote URL for CI user
-                sh 'export CI_PUSH_REPO=$(echo ${CI_REPOSITORY_URL} | perl -pe "s#.*@(.+?(\\:\\d+)?)/#git@\\1:#")'
-                sh 'git remote set-url --push origin "${CI_PUSH_REPO}"'
+                sh 'git remote rm origin || true'
+                sh "git remote add origin git@code.pagina.gmbh:${System.getenv('CI_PROJECT_PATH')}.git"
+
+                // Actually check out this git branch and make repo pushable
+                sh 'git config pull.ff only'
+                sh "git fetch --all"
+                sh "git checkout -f ${System.getenv('CI_COMMIT_REF_NAME')}"
+                sh "git pull --set-upstream origin ${System.getenv('CI_COMMIT_REF_NAME')}"
             }
         }
 
@@ -54,8 +64,10 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Switch to the development branch and catch it up with main.'
 
             doLast {
-                sh 'git checkout -b development origin/development'
-                sh 'git merge origin/main --ff-only'
+                sh 'git branch -d development || true'
+                sh 'git checkout -t origin/development'
+                sh 'git pull'
+                sh 'git merge main' // --ff-only
             }
         }
 
@@ -159,7 +171,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Pushes all branches and all tags'
 
             doLast {
-                sh 'git push --all'
+                sh 'git push --all --verbose'
                 sh 'git push --tags'
             }
         }
