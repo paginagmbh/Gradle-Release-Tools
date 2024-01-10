@@ -1,0 +1,44 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'groovy'
+    id 'com.gradle.plugin-publish' version '1.2.1'
+
+    id 'de.paginagmbh.commons.gradle-release-tools' version '+'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+group = "de.paginagmbh.commons"
+version = "1.0.0-SNAPSHOT"
+
+gradlePlugin {
+    website = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
+    vcsUrl = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
+
+    plugins {
+        gradleVersionNumberIncrementer {
+            id = 'de.paginagmbh.commons.gradle-release-tools'
+            implementationClass = 'de.paginagmbh.commons.gradleReleaseTools.GradleReleaseTools'
+            displayName = 'Release Tools'
+            description = 'Change version numbers and operate git branches'
+            tags.set(['gradle', 'meta', 'tool', 'util', 'git'])
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            url = version.endsWith('SNAPSHOT') ? "${artifactory_url}/plugins-snapshot-local" : "${artifactory_url}/plugins-release-local"
+            name = version.endsWith('SNAPSHOT') ? "PaginaArtifactoryLocalPluginsSnapshots" : "PaginaArtifactoryLocalPluginsReleased"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
+    }
+}

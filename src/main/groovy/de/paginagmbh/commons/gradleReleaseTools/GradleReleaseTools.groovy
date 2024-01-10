@@ -1,0 +1,167 @@
+package  de.paginagmbh.commons.gradleReleaseTools;
+
+import org.gradle.api.Project
+import org.gradle.api.Plugin
+import org.gradle.api.GradleException
+
+class GradleReleaseTools implements Plugin<Project> {
+    void apply(Project project) {
+        def buildFile = project.file("build.gradle")
+        def versionLineRegex = /version *= *"((([\d\.]+?)\.(\d+))(-\w+)?)"/
+
+        def sh = { String command ->
+            project.exec {
+                commandLine 'sh', '-c', command
+            }
+        }
+
+        project.tasks.register("configureReleaseBot") {
+            group 'Release Tools'
+            description 'Set up keys and certificates to perform git commits with ReleaseBot'
+
+            doLast {
+                // Only run when in docker, it will mess with the system and you don't wanna do that to your server
+                if (!new File('/.dockerenv').exists()) {
+                    throw new GradleException("This task may only be run inside a Docker container.")
+                }
+
+                // SSL Certificates are missing by default in some docker containers
+                sh 'apt update -y'
+                sh 'apt install ca-certificates'
+                // Install ssh-agent if not already installed, it is required by Docker.
+                sh 'which ssh-agent || ( apt install openssh-client -y )'
+                // Run ssh-agent (inside the build environment)
+                sh 'eval $(ssh-agent -s)'
+
+                // Add the SSH key stored in RELEASE_BOT_SSH_PRIVATE_KEY variable to the agent store
+                sh 'chmod 600 ${RELEASE_BOT_SSH_PRIVATE_KEY}'
+                sh 'ssh-add ${RELEASE_BOT_SSH_PRIVATE_KEY}'
+                // For Docker builds disable host key checking.
+                // Be aware that by adding that you are susceptible to man-in-the-middle attacks.
+                // This skips the 'add device fingerprint 12:34:56:78:9a:bc:de:f0 to known hosts?'
+                sh 'mkdir -p ~/.ssh'
+                sh 'echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+                // set username and email for our CI Release Bot
+                sh 'git config --global user.name "CI Release Bot"'
+                sh 'git config --global user.email "gitlab-release-bot@pagina.gmbh"'
+                // set push remote URL for CI user
+                sh 'export CI_PUSH_REPO=$(echo ${CI_REPOSITORY_URL} | perl -pe "s#.*@(.+?(\\:\\d+)?)/#git@\\1:#")'
+                sh 'git remote set-url --push origin "${CI_PUSH_REPO}"'
+            }
+        }
+
+        project.tasks.register("switchToDevelopmentAndCatchItUp") {
+            group 'Release Tools'
+            description 'Switch to the development branch and catch it up with main.'
+
+            doLast {
+                sh 'git checkout development'
+                sh 'git merge main --ff-only'
+            }
+        }
+
+        project.tasks.register("removeSnapshotFromVersion") {
+            group 'Release Tools'
+            description 'Remove the -SNAPSHOT suffix from the version number in build.gradle.'
+            doLast {
+                buildFile.write(buildFile.getText().replaceAll(versionLineRegex, 'version = "$2"'))
+            }
+        }
+
+        project.tasks.register("prepareNextSnapshotVersion") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+
+            group 'Release Tools'
+            description 'Increment the patch number and add a -SNAPSHOT suffix if it does not exist.'
+
+            doLast {
+                def text = buildFile.getText()
+                def matcher = text =~ versionLineRegex
+                def majorMinorVersion = matcher[0][3]
+                def patch = Integer.parseInt(matcher[0][4])
+                buildFile.write(text.replaceAll(versionLineRegex, "version = \"${majorMinorVersion}.${patch + 1}-SNAPSHOT\""))
+            }
+        }
+
+        project.tasks.register("updateVersionNumberInReadme") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
+            shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
+
+            group 'Release Tools'
+            description 'Changes the version number in the Readme for the sample showing how to use the plugin.'
+
+            ext {
+                pluginId = "placeholder"
+                readmeName = "README.md"
+            }
+
+            doLast {
+                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                def readme = project.file(readmeName)
+                def re = /id\s+'${pluginId}'\s+version\s+'[^']+'/
+                readme.write(readme.getText().replaceFirst(re, "id '${pluginId}' version '${version}'"))
+            }
+        }
+
+        project.tasks.register("gitCommitForRelease") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
+            shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
+            shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
+
+            group 'Release Tools'
+            description 'Commits all changed files with a note that a release occured.'
+
+            doLast {
+                sh "git commit -a -m '[grt] release v${MVN_RELEASE_VERSION}'"
+            }
+        }
+
+        project.tasks.register("gitCommitForSnapshot") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
+            shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
+            shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
+
+            group 'Release Tools'
+            description 'Commits all changed files with a note that this is the next development version.'
+
+            doLast {
+                sh "git commit -a -m '[grt] prepare for next development iteration (v${MVN_RELEASE_VERSION})'"
+            }
+        }
+
+        project.tasks.register("createGitTagForVersion") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
+            shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
+            shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
+            shouldRunAfter project.tasks.findByName("gitCommitForRelease")
+            shouldRunAfter project.tasks.findByName("gitCommitForSnapshot")
+
+            group 'Release Tools'
+            description 'Creates a git tag for the current version – including SNAPSHOT'
+
+            doLast {
+                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                sh "git tag 'v${version}'"
+            }
+        }
+
+        project.tasks.register("gitPush") {
+            shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("gitCommitForRelease")
+            shouldRunAfter project.tasks.findByName("gitCommitForSnapshot")
+
+            group 'Release Tools'
+            description 'Pushes all branches and all tags'
+
+            doLast {
+                sh 'git push --all'
+                sh 'git push --tags'
+            }
+        }
+    }
+}

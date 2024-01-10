@@ -1,0 +1,41 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+
+# Cache downloaded dependencies and plugins between builds
+# and use our global maven cache 'one-maven-cache-to-rule-them-all'
+cache:
+  key: one-maven-cache-to-rule-them-all
+  paths:
+    - .m2/repository
+
+
+.gradle_template:
+  image: gradle:8.4-jdk21-jammy
+
+
+deploy:artifactory:
+  extends: .gradle_template
+  script:
+    - ./gradlew publish
+
+
+git:branchmanagement:
+  extends: .gradle_template
+  script:
+    - BRANCH=$(git branch --show-current)
+    - PROJECTVERSION=$(./gradlew properties | grep version)
+    - if [[ ("$BRANCH" == "main" || "$BRANCH" == "master") && $PROJECTVERSION =~ "SNAPSHOT" ]]; then exit 0; fi
+    - ./gradlew configureReleaseBot
+    - ./gradlew
+      removeSnapshotFromVersion
+      updateVersionNumberInReadme
+      gitCommitForRelease
+      createGitTagForVersion
+    - ./gradlew
+      switchToDevelopmentAndCatchItUp
+      prepareNextSnapshotVersion
+      updateVersionNumberInReadme
+      gitCommitForSnapshot
+      createGitTagForVersion
+    - ./gradlew gitPush
