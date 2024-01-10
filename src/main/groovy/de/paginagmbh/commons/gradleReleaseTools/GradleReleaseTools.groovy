@@ -54,8 +54,8 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Switch to the development branch and catch it up with main.'
 
             doLast {
-                sh 'git checkout development'
-                sh 'git merge main --ff-only'
+                sh 'git checkout -b development origin/development'
+                sh 'git merge origin/main --ff-only'
             }
         }
 
