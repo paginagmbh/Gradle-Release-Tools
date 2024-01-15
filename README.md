@@ -73,6 +73,9 @@ plugins {
 Hierfür muss [Gitlab-CI—Pagina-Artifactory–Access](https://code.pagina.gmbh/paginagmbh/gitlab-ci-pagina-artifactory-access) eingerichtet sein und der Release-Bot als Maintainer im Repo.
 Letzteres sollte auf allen code.pagina.‍gmbh-Repos der Fall sein.
 
+Zur Versionsnummer-Ersetzung muss eine zusätzliche Konfigurationsoption angegeben werden.
+Siehe dazu [](#updateversionnumberinreadme).
+
 
 ## Tasks
 
@@ -98,6 +101,16 @@ Aus *2.0.0* wird *2.0.1-SNAPSHOT.*
 
 Wenn das Readme eine Zeile enthält, die erklärt, wie das Plugin verwendet wird (wie hier in [](#verwendung-in-gradle)), dann wird die Versionsnummer da durch die aktuelle aus der *build.gradle* ersetzt.
 
+Um zu wissen, für welches Plugin die Versionsnummer ersetzt werden soll, muss die ID des Plugins in der *build.gradle* wie folgt angegeben werden:
+
+```groovy
+updateVersionNumberInReadme {
+    pluginId = "de.paginagmbh.commons.gradle-release-tools"
+    // natürlich steht hier die entsprechende ID statt der für dieses Plugin.
+}
+```
+
+Hier existiert auch die Option `readmeName`, die als Standard *README.md* hat und somit vermutlich nie verändert werden muss.
 
 ### gitCommitForRelease
 
