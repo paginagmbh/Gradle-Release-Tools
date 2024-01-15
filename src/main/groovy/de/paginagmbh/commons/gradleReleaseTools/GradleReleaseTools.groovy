@@ -176,7 +176,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 sh 'git push --all --verbose'
-                sh 'git push --tags'
+                sh 'git push -f --tags'
             }
         }
     }
