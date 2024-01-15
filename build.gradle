@@ -14,7 +14,7 @@ repositories {
 }
 
 group = "de.paginagmbh.commons"
-version = "1.0.1"
+version = "1.0.2-SNAPSHOT"
 
 gradlePlugin {
     website = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
