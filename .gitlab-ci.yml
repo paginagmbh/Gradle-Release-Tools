@@ -38,12 +38,9 @@ git:release:
     - main
   script:
     # Only perform the branching when this is SNAPSHOT version on the main branch.
-    - PROJECTVERSION=$(./gradlew properties | grep version)
-    - if [[ ! ($PROJECTVERSION =~ "SNAPSHOT") ]]; then exit 0; fi
-    # Set up SSH keys and so forth
-    - ./gradlew configureReleaseBot --debug
+    - if [[ ! ($(./gradlew properties | grep version) =~ "SNAPSHOT") ]]; then exit 0; fi
     # Create a new commit on the main branch
-    - ./gradlew
+    - ./gradlew configureReleaseBot
       removeSnapshotFromVersion
       updateVersionNumberInReadme
       gitCommitForRelease
@@ -51,18 +48,15 @@ git:release:
       gitPush
 
 
-git:prepearesnapshot:
+git:preparesnapshot:
   extends: .gradle_template
   only:
     - main
   script:
     # Only perform the branching when this is not a SNAPSHOT version on the main branch.
-    - PROJECTVERSION=$(./gradlew properties | grep version)
-    - if [[ $PROJECTVERSION =~ "SNAPSHOT" ]]; then exit 0; fi
-    # Set up SSH keys and so forth
-    - ./gradlew configureReleaseBot
+    - if [[ ($(./gradlew properties | grep version) =~ "SNAPSHOT") ]]; then exit 0; fi
     # Create a new commit on the development branch for the next version
-    - ./gradlew
+    - ./gradlew configureReleaseBot
       switchToDevelopmentAndCatchItUp
       prepareNextSnapshotVersion
       updateVersionNumberInReadme

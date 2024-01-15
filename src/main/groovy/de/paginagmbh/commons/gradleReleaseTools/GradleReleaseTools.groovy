@@ -7,8 +7,9 @@ import org.gradle.api.GradleException
 class GradleReleaseTools implements Plugin<Project> {
     void apply(Project project) {
         def buildFile = project.file("build.gradle")
-        def versionLineRegex = /version *= *"((([\d\.]+?)\.(\d+))(-\w+)?)"/
+        def versionLineRegex = /version *= *["']((([\d\.]+?)\.(\d+))(-\w+)?)["']/
 
+        // Helper function, executes a shell command
         def sh = { String command ->
             project.exec {
                 commandLine 'sh', '-c', command
@@ -64,9 +65,12 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Switch to the development branch and catch it up with main.'
 
             doLast {
+                // Delete the development branch if it exists already
                 sh 'git branch -d development || true'
+                // Clone the development branch from origin
                 sh 'git checkout -t origin/development'
                 sh 'git pull'
+                // Merge into main branch
                 sh 'git merge main' // --ff-only
             }
         }
@@ -126,7 +130,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
-                sh "git commit -a -m '[grt] release v${version}'"
+                sh "git commit -a -m '[grt] release v${version}' -m 'For the source code of the release bot see https://code.pagina.gmbh/paginagmbh/gradle-release-tools'"
             }
         }
 
@@ -141,7 +145,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
-                sh "git commit -a -m '[grt] prepare for next development iteration (v${version})'"
+                sh "git commit -a -m '[grt] prepare for next development iteration (v${version})' -m 'For the source code of the release bot see https://code.pagina.gmbh/paginagmbh/gradle-release-tools'"
             }
         }
 

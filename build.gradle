@@ -3,7 +3,8 @@ plugins {
     id 'groovy'
     id 'com.gradle.plugin-publish' version '1.2.1'
 
-    id 'de.paginagmbh.commons.gradle-release-tools' version '0.9.21-SNAPSHOT'
+    // Just use the latest version of itself, hardcoding a number here would be counter-productive.
+    id 'de.paginagmbh.commons.gradle-release-tools' version '+'
 }
 
 repositories {
@@ -13,7 +14,7 @@ repositories {
 }
 
 group = "de.paginagmbh.commons"
-version = "0.9.22-SNAPSHOT"
+version = "1.0.0-SNAPSHOT"
 
 gradlePlugin {
     website = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
