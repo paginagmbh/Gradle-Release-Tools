@@ -55,8 +55,10 @@ class GradleReleaseTools implements Plugin<Project> {
                 // Actually check out this git branch and make repo pushable
                 sh 'git config pull.ff only'
                 sh "git fetch --all"
-                sh "git checkout -f ${System.getenv('CI_COMMIT_REF_NAME')}"
-                sh "git pull --set-upstream origin ${System.getenv('CI_COMMIT_REF_NAME')}"
+                // Delete the main branch if it exists already
+                sh "git branch -d ${System.getenv('CI_COMMIT_REF_NAME')} || true"
+                sh "git checkout -t origin/${System.getenv('CI_COMMIT_REF_NAME')}"
+                sh "git pull"
             }
         }
 
