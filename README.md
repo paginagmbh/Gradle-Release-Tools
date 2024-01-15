@@ -9,6 +9,8 @@ Im einfachsten Fall sieht das in der *.gitlab-ci.yml* so aus:
 ```yaml
 .gradle_template:
   image: gradle:8.4-jdk21-jammy
+  except:
+    - tags
   before_script:
     - export GRADLE_USER_HOME=`pwd`/.gradle
     - mkdir -p $GRADLE_USER_HOME || true

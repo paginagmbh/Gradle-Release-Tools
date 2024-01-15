@@ -56,7 +56,7 @@ class GradleReleaseTools implements Plugin<Project> {
                 sh 'git config pull.ff only'
                 sh "git fetch --all"
                 // Delete the main branch if it exists already
-                sh "git branch -d ${System.getenv('CI_COMMIT_REF_NAME')} || true"
+                sh "git branch -D ${System.getenv('CI_COMMIT_REF_NAME')} || true"
                 sh "git checkout -t origin/${System.getenv('CI_COMMIT_REF_NAME')}"
                 sh "git pull"
             }
@@ -68,7 +68,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 // Delete the development branch if it exists already
-                sh 'git branch -d development || true'
+                sh 'git branch -D development || true'
                 // Clone the development branch from origin
                 sh 'git checkout -t origin/development'
                 sh 'git pull'
