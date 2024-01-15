@@ -140,3 +140,8 @@ Erzeugt einen Git-Tag für die Version, die gerade im *build.gradle* festgelegt 
 ### gitPush
 
 Pusht alle Branches und Tags an den Server.
+
+## Todo
+
+- [ ] Handhabung, wenn der development-Branch nicht existiert.
+	Es ist GitLab Standard für Repositorien, dass wenn ein Merge-Request abgeschlossen ist, der Quellzweig gelöscht wird.
