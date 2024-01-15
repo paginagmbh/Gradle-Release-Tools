@@ -164,7 +164,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
-                sh "git tag 'v${version}'"
+                sh "git tag -f 'v${version}'"
             }
         }
 
