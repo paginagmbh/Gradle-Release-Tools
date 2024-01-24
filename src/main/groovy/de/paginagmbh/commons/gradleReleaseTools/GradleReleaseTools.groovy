@@ -116,8 +116,17 @@ class GradleReleaseTools implements Plugin<Project> {
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
                 def readme = project.file(readmeName)
-                def re = /id\s+'${pluginId}'\s+version\s+'[^']+'/
-                readme.write(readme.getText().replaceFirst(re, "id '${pluginId}' version '${version}'"))
+                readme.write(
+                    readme.getText()
+                    .replaceAll(
+                        /(['"]${pluginId}['"]\s+version\s+['"])[^']+(['"])/,
+                        '$1' + "${version}" + '$2'
+                    )
+                    .replaceAll(
+                        /(['"]${pluginId}:)[^'"@]+((@[^'"]+)?['"])/,
+                        '$1' + "${version}" + '$2'
+                    )
+                )
             }
         }
 
