@@ -64,7 +64,7 @@ Dieses Plugin wird einfach mit den anderen Gradle-Plugins aufgeführt.
 
 ```groovy
 plugins {
-	...
+	  ...
 
     id 'de.paginagmbh.commons.gradle-release-tools' version '1.0.2-SNAPSHOT'
 }
@@ -140,6 +140,7 @@ Erzeugt einen Git-Tag für die Version, die gerade im *build.gradle* festgelegt 
 ### gitPush
 
 Pusht alle Branches und Tags an den Server.
+
 
 ## Todo
 
