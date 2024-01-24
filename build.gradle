@@ -2,9 +2,6 @@ plugins {
     id 'java-gradle-plugin'
     id 'groovy'
     id 'com.gradle.plugin-publish' version '1.2.1'
-
-    // Just use the latest version of itself, hardcoding a number here would be counter-productive.
-    id 'de.paginagmbh.commons.gradle-release-tools' version '+'
 }
 
 repositories {
@@ -13,8 +10,19 @@ repositories {
     gradlePluginPortal()
 }
 
+// Plugin that uses itself.
+// based on https://gist.github.com/ksaua/74d75901458235f48da1
+def classpaths = [file('src/main/groovy').absolutePath]
+String[] classpathArray = classpaths.toArray(new String[classpaths.size()]);
+def engine = new GroovyScriptEngine(classpathArray, this.getClass().getClassLoader())
+def self = engine.loadScriptByName('de/paginagmbh/commons/gradleReleaseTools/GradleReleaseTools.groovy')
+apply plugin: self
+
 group = "de.paginagmbh.commons"
 version = "1.0.2-SNAPSHOT"
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 gradlePlugin {
     website = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
