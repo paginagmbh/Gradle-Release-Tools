@@ -62,6 +62,22 @@ class GradleReleaseTools implements Plugin<Project> {
             }
         }
 
+        project.tasks.register("switchToMainAndCatchItUp") {
+            group 'Release Tools'
+            description 'Switch to the main branch and catch it up with the current branch.'
+
+            doLast {
+                // Delete the main branch if it exists already
+                sh "git branch -D $System.env.CI_DEFAULT_BRANCH || true"
+                // Clone the main branch from origin
+                sh 'git fetch'
+                sh "git checkout -t origin/$System.env.CI_DEFAULT_BRANCH"
+                sh 'git pull'
+                // Merge into last branch
+                sh 'git merge -' // --ff-only
+            }
+        }
+
         project.tasks.register("switchToDevelopmentAndCatchItUp") {
             group 'Release Tools'
             description 'Switch to the development branch and catch it up with main.'
@@ -87,6 +103,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("prepareNextSnapshotVersion") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
 
             group 'Release Tools'
             description 'Increment the patch number and add a -SNAPSHOT suffix if it does not exist.'
@@ -102,6 +119,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("updateVersionNumberInReadme") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
             shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
             shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
 
@@ -109,7 +127,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Changes the version number in the Readme for the sample showing how to use the plugin.'
 
             ext {
-                pluginId = "placeholder"
+                pluginId = "$project.group.$project.name"
                 readmeName = "README.md"
             }
 
@@ -132,6 +150,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("gitCommitForRelease") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
             shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
             shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
             shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
@@ -147,6 +166,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("gitCommitForSnapshot") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
             shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
             shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
             shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
@@ -162,6 +182,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("createGitTagForVersion") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
             shouldRunAfter project.tasks.findByName("removeSnapshotFromVersion")
             shouldRunAfter project.tasks.findByName("prepareNextSnapshotVersion")
             shouldRunAfter project.tasks.findByName("updateVersionNumberInReadme")
@@ -179,6 +200,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("gitPush") {
             shouldRunAfter project.tasks.findByName("switchToDevelopmentAndCatchItUp")
+            shouldRunAfter project.tasks.findByName("switchToMainAndCatchItUp")
             shouldRunAfter project.tasks.findByName("gitCommitForRelease")
             shouldRunAfter project.tasks.findByName("gitCommitForSnapshot")
 

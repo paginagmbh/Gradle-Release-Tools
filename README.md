@@ -7,10 +7,12 @@ Zum Entfernen der *-SNAPSHOT*-Endung aus der *build.gradle*–Datei und Erzeugen
 Im einfachsten Fall sieht das in der *.gitlab-ci.yml* so aus:
 
 ```yaml
+stages:
+  - deploy
+  - release
+
 .gradle_template:
   image: gradle:8.4-jdk21-jammy
-  except:
-    - tags
   before_script:
     - export GRADLE_USER_HOME=`pwd`/.gradle
     - mkdir -p $GRADLE_USER_HOME || true
@@ -18,13 +20,13 @@ Im einfachsten Fall sieht das in der *.gitlab-ci.yml* so aus:
 
 git:release:
   extends: .gradle_template
-  only:
-    - main
+  stage: release
+  rules:
+    - when: manual
   script:
-    # Only perform the branching when this is SNAPSHOT version on the main branch.
-    - if [[ ! ($(./gradlew properties | grep version) =~ "SNAPSHOT") ]]; then exit 0; fi
     # Create a new commit on the main branch
-    - ./gradlew configureReleaseBot
+    - ./gradlew switchToMainAndCatchItUp
+      configureReleaseBot
       removeSnapshotFromVersion
       updateVersionNumberInReadme
       gitCommitForRelease
@@ -38,8 +40,9 @@ Dies geschieht via
 ```yaml
 git:preparesnapshot:
   extends: .gradle_template
-  only:
-    - main
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     # Only perform the branching when this is not a SNAPSHOT version on the main branch.
     - if [[ ($(./gradlew properties | grep version) =~ "SNAPSHOT") ]]; then exit 0; fi
@@ -51,6 +54,8 @@ git:preparesnapshot:
       gitCommitForSnapshot
       gitPush
 ```
+
+Das release erfolgt dann durch manuelles Ausführen des Jobs in der development pipeline.
 
 Die *if*-Zeile bricht die CI-Ausführung ab, wenn sie sich auf eine Snapshot- beziehungsweise nicht-Snapshot–Version bezieht.
 
@@ -86,6 +91,7 @@ Folgende Tasks werden durch das Tool bereitgestellt:
 
 Richtet die SSH-Schlüssel des Release-Bot ein und bereitet git-branches so vor, dass sie gepushed werden können.
 
+
 ### removeSnapshotFromVersion
 
 Entfernt die *-SNAPSHOT*-Endung aus der *build.gradle.*
@@ -110,7 +116,10 @@ updateVersionNumberInReadme {
 }
 ```
 
+Standardmäßig wird hier `<group>.<project-name>` angeommen, dieser Block ist also nicht zwingend notwendig.
+
 Hier existiert auch die Option `readmeName`, die als Standard *README.md* hat und somit vermutlich nie verändert werden muss.
+
 
 ### gitCommitForRelease
 
@@ -120,6 +129,16 @@ Erzeugt ein git-Commit mit einer Nachricht die angibt, dass es sich hier um das 
 ### gitCommitForSnapshot
 
 Erzeugt ein git-Commit mit einer Nachricht, die angibt, dass es sich hier um die nächste Snapshot-Version handelt.
+
+
+### switchToMainAndCatchItUp
+
+Wechselt auf den *main*-Branch und fast-forwarded ihn auf den Stand des jetzigen Branches.
+
+:::{attention}
+Dieser Task schlägt fehl, wenn der *main*-Branch *master* heißt!
+master-Branches sollten umbenannt werden.
+:::
 
 
 ### switchToDevelopmentAndCatchItUp

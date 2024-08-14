@@ -54,7 +54,3 @@ publishing {
         }
     }
 }
-
-updateVersionNumberInReadme {
-    pluginId = "de.paginagmbh.commons.gradle-release-tools"
-}
