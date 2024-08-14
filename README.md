@@ -71,7 +71,7 @@ Dieses Plugin wird einfach mit den anderen Gradle-Plugins aufgeführt.
 plugins {
 	  ...
 
-    id 'de.paginagmbh.commons.gradle-release-tools' version '1.1.2'
+    id 'de.paginagmbh.commons.gradle-release-tools' version '1.1.3-SNAPSHOT'
 }
 ```
 
