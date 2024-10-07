@@ -22,13 +22,9 @@ stages:
 
 .gradle_template:
   image: gradle:8.4-jdk21-jammy
-  before_script:
-    - export GRADLE_USER_HOME=`pwd`/.gradle
-    - mkdir -p $GRADLE_USER_HOME || true
-    - cp .gitlab-ci/artifactory-access/init.gradle $GRADLE_USER_HOME
 
 
-deploy:artifactory:
+deploy:registry:gitlab:
   extends: .gradle_template
   stage: deploy
   rules:

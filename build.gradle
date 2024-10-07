@@ -41,15 +41,29 @@ gradlePlugin {
     }
 }
 
-def artifactory_url = "https://bintray.pagina.gmbh/artifactory"
+// Upload to gitlab package registry -------------------------------------------
+
 publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
     repositories {
         maven {
-            url = "https://bintray.pagina.gmbh/artifactory/" + (version.endsWith('SNAPSHOT') ? "plugins-snapshot-local" : "plugins-release-local")
-            name = "PaginaArtifactoryLocalPlugins" + (version.endsWith('SNAPSHOT') ? "Snapshots" : "Released")
-            credentials {
-                username = System.getenv("ARTIFACTORY_USER")
-                password = System.getenv("ARTIFACTORY_PASSWORD")
+            url = "https://code.pagina.gmbh/api/v4/projects/479/packages/maven"
+            name = "code.pagina.gmbh"
+            if (System.getenv("CI_JOB_TOKEN") == null) {
+                credentials {
+                    username = System.getenv("GITLAB_USER") ?: "gitlab-ci-release-bot"
+                    password = System.getenv("GITLAB_PASSWORD")
+                }
+            } else {
+                credentials(HttpHeaderCredentials) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")
+                } 
+                authentication { header(HttpHeaderAuthentication) }
             }
         }
     }

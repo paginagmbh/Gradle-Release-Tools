@@ -1,3 +1,0 @@
-[submodule ".gitlab-ci/artifactory-access"]
-	path = .gitlab-ci/artifactory-access
-	url = ../../paginagmbh/gitlab-ci-pagina-artifactory-access.git
