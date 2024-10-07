@@ -51,7 +51,7 @@ publishing {
     }
     repositories {
         maven {
-            url = "https://code.pagina.gmbh/api/v4/projects/479/packages/maven"
+            url = "https://code.pagina.gmbh/api/v4/projects/519/packages/maven"
             name = "code.pagina.gmbh"
             if (System.getenv("CI_JOB_TOKEN") == null) {
                 credentials {
