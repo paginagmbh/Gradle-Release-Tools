@@ -13,10 +13,6 @@ stages:
 
 .gradle_template:
   image: gradle:8.4-jdk21-jammy
-  before_script:
-    - export GRADLE_USER_HOME=`pwd`/.gradle
-    - mkdir -p $GRADLE_USER_HOME || true
-    - cp .gitlab-ci/artifactory-access/init.gradle $GRADLE_USER_HOME
 
 git:release:
   extends: .gradle_template
@@ -25,8 +21,8 @@ git:release:
     - when: manual
   script:
     # Create a new commit on the main branch
-    - ./gradlew switchToMainAndCatchItUp
-      configureReleaseBot
+    - ./gradlew configureReleaseBot
+      switchToMainAndCatchItUp
       removeSnapshotFromVersion
       updateVersionNumberInReadme
       gitCommitForRelease
@@ -75,8 +71,7 @@ plugins {
 }
 ```
 
-Hierfür muss [Gitlab-CI—Pagina-Artifactory–Access](https://code.pagina.gmbh/paginagmbh/gitlab-ci-pagina-artifactory-access) eingerichtet sein und der Release-Bot als Maintainer im Repo.
-Letzteres sollte auf allen code.pagina.‍gmbh-Repos der Fall sein.
+Zum Verwenden und Kompilieren des Plugins muss ein Token für [die Maven-Paketquelle aus GitLab](https://code.pagina.gmbh/paginagmbh/maven-registry) konfiguriert sein.
 
 Zur Versionsnummer-Ersetzung muss eine zusätzliche Konfigurationsoption angegeben werden.
 Siehe dazu [](#updateversionnumberinreadme).
