@@ -15,11 +15,11 @@ repositories {
 def classpaths = [file('src/main/groovy').absolutePath]
 String[] classpathArray = classpaths.toArray(new String[classpaths.size()]);
 def engine = new GroovyScriptEngine(classpathArray, this.getClass().getClassLoader())
-def self = engine.loadScriptByName('de/paginagmbh/commons/gradleReleaseTools/GradleReleaseTools.groovy')
+def self = engine.loadScriptByName('de/paginagmbh/tools/gradle/release/GradleReleaseTools.groovy')
 apply plugin: self
 
-group = "de.paginagmbh.commons"
-version = "1.1.6-SNAPSHOT"
+group = "de.paginagmbh.tools.gradle"
+version = "1.2.0-SNAPSHOT"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -27,16 +27,16 @@ compileJava {
 }
 
 gradlePlugin {
-    website = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
-    vcsUrl = 'https://code.pagina.gmbh/paginagmbh/gradle-release-tools'
+    website = 'https://github.com/paginagmbh/Gradle-Release-Tools'
+    vcsUrl = 'https://github.com/paginagmbh/Gradle-Release-Tools'
 
     plugins {
         gradleVersionNumberIncrementer {
-            id = 'de.paginagmbh.commons.gradle-release-tools'
-            implementationClass = 'de.paginagmbh.commons.gradleReleaseTools.GradleReleaseTools'
+            id = 'de.paginagmbh.tools.gradle.release'
+            implementationClass = 'de.paginagmbh.tools.gradle.release.GradleReleaseTools'
             displayName = 'Release Tools'
             description = 'Change version numbers and operate git branches'
-            tags.set(['gradle', 'meta', 'tool', 'util', 'git'])
+            tags.set(['gradle', 'meta', 'tool', 'util', 'git', 'release', 'gitlab', 'version', 'versioning'])
         }
     }
 }

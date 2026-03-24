@@ -1,10 +1,11 @@
 # Gradle Release Tools
 
-Werkzeuge zum Erzeugen neuer Versionen über CI-Prozesse.
-Dieses Tool ist für zwei spezifische Anwendungsfälle gedacht:
+Tools for creating new versions through CI processes.
+It is specifically designed for **GitLab CI.**
+This tool is intended for two specific use cases:
 
-Zum Entfernen der *-SNAPSHOT*-Endung aus der *build.gradle*–Datei und Erzeugen eines neuen git-Commits.
-Im einfachsten Fall sieht das in der *.gitlab-ci.yml* so aus:
+To remove the *-SNAPSHOT* suffix from the *build.gradle* file and create a new git commit.
+In the simplest case, this looks like this in *.gitlab-ci.yml*:
 
 ```yaml
 stages:
@@ -30,8 +31,8 @@ git:release:
       gitPush
 ```
 
-Der zweite Verwendungszweck ist das Erzeugen eines neuen Commits auf dem *development*-Branch, mit der nächst-höheren Patch-Nummer und einer Snapshot-Endung (also auf Release *2.0.0* folgt *2.0.1-SNAPSHOT*).
-Dies geschieht via
+The second use case is creating a new commit on the *development* branch with the next higher patch number and a snapshot suffix (so release *2.0.0* is followed by *2.0.1-SNAPSHOT*).
+This is done via
 
 ```yaml
 git:preparesnapshot:
@@ -51,112 +52,104 @@ git:preparesnapshot:
       gitPush
 ```
 
-Das release erfolgt dann durch manuelles Ausführen des Jobs in der development pipeline.
+The release is then done by manually running the job in the development pipeline.
 
-Die *if*-Zeile bricht die CI-Ausführung ab, wenn sie sich auf eine Snapshot- beziehungsweise nicht-Snapshot–Version bezieht.
+The *if* line aborts CI execution depending on whether it refers to a snapshot or non-snapshot version.
 
-Ein vollständiges Minimalbeispiel stellt die [.gitlab-ci.yml](https://code.pagina.gmbh/paginagmbh/gradle-release-tools/-/blob/main/.gitlab-ci.yml) dar.
+A complete minimal example is provided by [.gitlab-ci.yml](.gitlab-ci.yml).
 
 
-## Verwendung in Gradle
+## Usage in Gradle
 
-Dieses Plugin wird einfach mit den anderen Gradle-Plugins aufgeführt.
+This plugin is simply listed together with the other Gradle plugins.
 
 
 ```groovy
 plugins {
 	  ...
 
-    id 'de.paginagmbh.commons.gradle-release-tools' version '1.1.6-SNAPSHOT'
+    id 'de.paginagmbh.tools.gradle.release' version '1.2.0'
 }
 ```
 
-Zum Verwenden und Kompilieren des Plugins muss ein Token für [die Maven-Paketquelle aus GitLab](https://code.pagina.gmbh/paginagmbh/maven-registry) konfiguriert sein.
+To use and compile the plugin, a token for [the Maven package source from GitLab](https://code.pagina.gmbh/paginagmbh/maven-registry) must be configured.
 
-Zur Versionsnummer-Ersetzung muss eine zusätzliche Konfigurationsoption angegeben werden.
-Siehe dazu [](#updateversionnumberinreadme).
+For version number replacement, an additional configuration option must be specified.
+See [here](#updateversionnumberinreadme).
 
 
 ## Tasks
 
-Folgende Tasks werden durch das Tool bereitgestellt:
+The following tasks are provided by this tool:
 
 
 ### configureReleaseBot
 
-Richtet die SSH-Schlüssel des Release-Bot ein und bereitet git-branches so vor, dass sie gepushed werden können.
+Sets up the release bot SSH keys and prepares git branches so they can be pushed.
 
 
 ### removeSnapshotFromVersion
 
-Entfernt die *-SNAPSHOT*-Endung aus der *build.gradle.*
+Removes the *-SNAPSHOT* suffix from *build.gradle.*
 
 
 ### prepareNextSnapshotVersion
 
-Erhöht die patch-Version in *build.gradle* und fügt die *-SNAPSHOT*-Endung hinzu.
-Aus *2.0.0* wird *2.0.1-SNAPSHOT.*
+Increases the patch version in *build.gradle* and adds the *-SNAPSHOT* suffix.
+*2.0.0* becomes *2.0.1-SNAPSHOT.*
 
 
 ### updateVersionNumberInReadme
 
-Wenn das Readme eine Zeile enthält, die erklärt, wie das Plugin verwendet wird (wie hier in [](#verwendung-in-gradle)), dann wird die Versionsnummer da durch die aktuelle aus der *build.gradle* ersetzt.
+If the README contains a line that explains how the plugin is used (as shown [here](#usage-in-gradle)), then the version number there is replaced with the current one from *build.gradle*.
 
-Um zu wissen, für welches Plugin die Versionsnummer ersetzt werden soll, muss die ID des Plugins in der *build.gradle* wie folgt angegeben werden:
+To know for which plugin the version number should be replaced, the plugin ID must be specified in *build.gradle* as follows:
 
 ```groovy
 updateVersionNumberInReadme {
-    pluginId = "de.paginagmbh.commons.gradle-release-tools"
-    // natürlich steht hier die entsprechende ID statt der für dieses Plugin.
+    pluginId = "de.paginagmbh.tools.gradle.release"
+    // naturally, use the corresponding ID here instead of the one for this plugin.
 }
 ```
 
-Standardmäßig wird hier `<group>.<project-name>` angeommen, dieser Block ist also nicht zwingend notwendig.
+By default, `<group>.<project-name>` is assumed here, so this block is not strictly required.
 
-Hier existiert auch die Option `readmeName`, die als Standard *README.md* hat und somit vermutlich nie verändert werden muss.
+There is also the `readmeName` option, which has *README.md* as the default and therefore probably never needs to be changed.
 
 
 ### gitCommitForRelease
 
-Erzeugt ein git-Commit mit einer Nachricht die angibt, dass es sich hier um das Release der Version handelt.
+Creates a git commit with a message indicating that this is the release of the version.
 
 
 ### gitCommitForSnapshot
 
-Erzeugt ein git-Commit mit einer Nachricht, die angibt, dass es sich hier um die nächste Snapshot-Version handelt.
+Creates a git commit with a message indicating that this is the next snapshot version.
 
 
 ### switchToMainAndCatchItUp
 
-Wechselt auf den *main*-Branch und fast-forwarded ihn auf den Stand des jetzigen Branches.
-
-:::{attention}
-Dieser Task schlägt fehl, wenn der *main*-Branch *master* heißt!
-master-Branches sollten umbenannt werden.
-:::
+Switches to the *main* branch and fast-forwards it to the state of the current branch.
+The main branch is determined by the `CI_DEFAULT_BRANCH` variable, which is set by GitLab CI to the default branch of the repository (usually *main* or *master*).
 
 
 ### switchToDevelopmentAndCatchItUp
 
-Wechselt auf den *development*-Branch und fast-forwarded ihn auf den Stand des *main*-Branches.
-
-:::{attention}
-Dieser Task schlägt fehl, wenn der *main*-Branch *master* heißt!
-master-Branches sollten umbenannt werden.
-:::
+Switches to the *development* branch and fast-forwards it to the state of the *main* branch.
+The main branch is determined by the `CI_DEFAULT_BRANCH` variable, which is set by GitLab CI to the default branch of the repository (usually *main* or *master*).
 
 
 ### createGitTagForVersion
 
-Erzeugt einen Git-Tag für die Version, die gerade im *build.gradle* festgelegt ist.
+Creates a Git tag for the version currently set in *build.gradle*.
 
 
 ### gitPush
 
-Pusht alle Branches und Tags an den Server.
+Pushes all branches and tags to the server.
 
 
 ## Todo
 
-- [ ] Handhabung, wenn der development-Branch nicht existiert.
-	Es ist GitLab Standard für Repositorien, dass wenn ein Merge-Request abgeschlossen ist, der Quellzweig gelöscht wird.
+- [ ] Handling when the development branch does not exist.
+	It is the GitLab default for repositories that when a merge request is completed, the source branch is deleted.
