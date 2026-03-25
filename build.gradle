@@ -1,7 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'groovy'
-    id 'com.gradle.plugin-publish' version '1.2.1'
+    id 'com.gradle.plugin-publish' version '2.1.1'
 }
 
 repositories {
@@ -15,11 +15,11 @@ repositories {
 def classpaths = [file('src/main/groovy').absolutePath]
 String[] classpathArray = classpaths.toArray(new String[classpaths.size()]);
 def engine = new GroovyScriptEngine(classpathArray, this.getClass().getClassLoader())
-def self = engine.loadScriptByName('de/paginagmbh/tools/gradle/release/GradleReleaseTools.groovy')
+def self = engine.loadScriptByName('gmbh/pagina/tools/gradle/release/GradleReleaseTools.groovy')
 apply plugin: self
 
-group = "de.paginagmbh.tools.gradle"
-version = "1.2.0-SNAPSHOT"
+group = "gmbh.pagina.tools.gradle"
+version = "1.2.0"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -31,18 +31,19 @@ gradlePlugin {
     vcsUrl = 'https://github.com/paginagmbh/Gradle-Release-Tools'
 
     plugins {
-        gradleVersionNumberIncrementer {
-            id = 'de.paginagmbh.tools.gradle.release'
-            implementationClass = 'de.paginagmbh.tools.gradle.release.GradleReleaseTools'
+        gradleReleaseTools {
+            id = 'gmbh.pagina.tools.gradle.release'
+            implementationClass = 'gmbh.pagina.tools.gradle.release.GradleReleaseTools'
             displayName = 'Release Tools'
             description = 'Change version numbers and operate git branches'
-            tags.set(['gradle', 'meta', 'tool', 'util', 'git', 'release', 'gitlab', 'version', 'versioning'])
+            tags.set(['meta', 'tool', 'util', 'git', 'release', 'gitlab', 'version', 'versioning'])
         }
     }
 }
 
-// Upload to gitlab package registry -------------------------------------------
+// Upload to gitlab package registry and gradle plugin portal ------------------
 
+def artifactory_url = "https://bintray.pagina.gmbh/artifactory"
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -51,19 +52,11 @@ publishing {
     }
     repositories {
         maven {
-            url = "https://code.pagina.gmbh/api/v4/projects/519/packages/maven"
-            name = "code.pagina.gmbh"
-            if (System.getenv("CI_JOB_TOKEN") == null) {
-                credentials {
-                    username = System.getenv("GITLAB_USER") ?: "gitlab-ci-release-bot"
-                    password = System.getenv("GITLAB_PASSWORD")
-                }
-            } else {
-                credentials(HttpHeaderCredentials) {
-                    name = "Job-Token"
-                    value = System.getenv("CI_JOB_TOKEN")
-                } 
-                authentication { header(HttpHeaderAuthentication) }
+            url = version.endsWith('SNAPSHOT') ? "${artifactory_url}/plugins-snapshot-local" : "${artifactory_url}/plugins-release-local"
+            name = version.endsWith('SNAPSHOT') ? "PaginaArtifactoryLocalPluginsSnapshots" : "PaginaArtifactoryLocalPluginsReleased"
+            credentials {
+                username = System.getenv("ARTIFACTORY_USER")
+                password = System.getenv("ARTIFACTORY_PASSWORD")
             }
         }
     }

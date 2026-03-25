@@ -68,15 +68,18 @@ This plugin is simply listed together with the other Gradle plugins.
 plugins {
 	  ...
 
-    id 'de.paginagmbh.tools.gradle.release' version '1.2.0'
+    id 'gmbh.pagina.tools.gradle.release' version '1.2.0'
 }
 ```
 
-To use and compile the plugin, a token for [the Maven package source from GitLab](https://code.pagina.gmbh/paginagmbh/maven-registry) must be configured.
+This plugin can be obtained from the Gradle Plugin Portal.
+
+Snapshot-versions are available in the pagina Artifactory.
+This is not publicly available.
+To publish packages there, `$ARTIFACTORY_USER` and `$ARTIFACTORY_PASSWORD` must be set as environment variables.
 
 For version number replacement, an additional configuration option must be specified.
 See [here](#updateversionnumberinreadme).
-
 
 ## Tasks
 
@@ -107,7 +110,7 @@ To know for which plugin the version number should be replaced, the plugin ID mu
 
 ```groovy
 updateVersionNumberInReadme {
-    pluginId = "de.paginagmbh.tools.gradle.release"
+    pluginId = "gmbh.pagina.tools.gradle.release"
     // naturally, use the corresponding ID here instead of the one for this plugin.
 }
 ```

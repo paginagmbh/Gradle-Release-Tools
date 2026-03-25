@@ -1,4 +1,4 @@
-package de.paginagmbh.tools.gradle.release;
+package gmbh.pagina.tools.gradle.release;
 
 import org.gradle.api.Project
 import org.gradle.api.Plugin
@@ -68,10 +68,10 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 // Delete the main branch if it exists already
-                sh "git branch -D $System.getenv('CI_DEFAULT_BRANCH') || true"
+                sh "git branch -D ${System.getenv('CI_DEFAULT_BRANCH')} || true"
                 // Clone the main branch from origin
                 sh 'git fetch'
-                sh "git checkout -t origin/$System.getenv('CI_DEFAULT_BRANCH')"
+                sh "git checkout -t origin/${System.getenv('CI_DEFAULT_BRANCH')}"
                 sh 'git pull'
                 // Merge into last branch
                 sh 'git merge -' // --ff-only
@@ -89,7 +89,7 @@ class GradleReleaseTools implements Plugin<Project> {
                 sh 'git checkout -t origin/development'
                 sh 'git pull'
                 // Merge into main branch
-                sh "git merge $System.getenv('CI_DEFAULT_BRANCH')" // --ff-only
+                sh "git merge ${System.getenv('CI_DEFAULT_BRANCH')}" // --ff-only
             }
         }
 
@@ -160,7 +160,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
-                sh "git commit -a -m '[grt] release v${version}' -m 'For the source code of the release bot see https://code.pagina.gmbh/paginagmbh/gradle-release-tools'"
+                sh "git commit --allow-empty -a -m '[grt] release v${version}' -m 'For the source code of the release bot see https://github.com/paginagmbh/Gradle-Release-Tools'"
             }
         }
 
@@ -176,7 +176,7 @@ class GradleReleaseTools implements Plugin<Project> {
 
             doLast {
                 def version = (buildFile.getText() =~ versionLineRegex)[0][1]
-                sh "git commit -a -m '[grt] prepare for next development iteration (v${version})' -m 'For the source code of the release bot see https://code.pagina.gmbh/paginagmbh/gradle-release-tools'"
+                sh "git commit --allow-empty -a -m '[grt] prepare for next development iteration (v${version})' -m 'For the source code of the release bot see https://github.com/paginagmbh/Gradle-Release-Tools'"
             }
         }
 

@@ -34,6 +34,15 @@ deploy:registry:gitlab:
     - ./gradlew publish
 
 
+deploy:registry:gradlePluginPortal:
+  extends: .gradle_template
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - ./gradlew publishPlugins
+
+
 git:release:
   extends: .gradle_template
   stage: release
