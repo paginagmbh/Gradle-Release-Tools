@@ -61,3 +61,7 @@ publishing {
         }
     }
 }
+
+updateVersionNumberInReadme {
+    pluginId = "gmbh.pagina.tools.gradle.release"
+}
