@@ -19,7 +19,7 @@ def self = engine.loadScriptByName('gmbh/pagina/tools/gradle/release/GradleRelea
 apply plugin: self
 
 group = "gmbh.pagina.tools.gradle"
-version = "1.2.1"
+version = "1.2.2-SNAPSHOT"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
