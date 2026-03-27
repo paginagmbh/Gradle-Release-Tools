@@ -47,7 +47,8 @@ git:release:
   extends: .gradle_template
   stage: release
   rules:
-    - when: manual
+      -   if: '$CI_COMMIT_BRANCH == "development"'
+          when: manual
   script:
     # Create a new commit on the main branch
     - ./gradlew configureReleaseBot
