@@ -6,7 +6,6 @@ import org.gradle.api.GradleException
 
 class GradleReleaseTools implements Plugin<Project> {
     void apply(Project project) {
-        def buildFile = project.file("build.gradle")
         def versionLineRegex = /version *= *["']((([\d\.]+?)\.(\d+))(-\w+)?)["']/
 
         // Helper function, executes a shell command
@@ -14,6 +13,35 @@ class GradleReleaseTools implements Plugin<Project> {
             project.exec {
                 commandLine 'sh', '-c', command
             }
+        }
+
+        def resolveBuildFile = {
+            // Respect Gradle's configured build file first (works for custom names and .kts).
+            def configuredBuildFile = project.buildFile
+            if (configuredBuildFile != null && configuredBuildFile.exists()) {
+                return configuredBuildFile
+            }
+
+            // Fallbacks for projects where the configured build file is missing/unset.
+            def fallbackBuildFile = [
+                project.file("build.gradle"),
+                project.file("build.gradle.kts"),
+                project.rootProject.file("build.gradle"),
+                project.rootProject.file("build.gradle.kts")
+            ].find { it.exists() }
+            if (fallbackBuildFile != null) {
+                return fallbackBuildFile
+            }
+
+            throw new GradleException("Could not find a usable build script for project ${project.path}. Looked for configured build file and build.gradle/build.gradle.kts in project and root directories.")
+        }
+
+        def readVersion = { File buildFile ->
+            def matcher = buildFile.getText() =~ versionLineRegex
+            if (matcher.size() == 0) {
+                throw new GradleException("Could not find a version declaration in ${buildFile.name}")
+            }
+            matcher[0][1]
         }
 
         project.tasks.register("configureReleaseBot") {
@@ -95,8 +123,9 @@ class GradleReleaseTools implements Plugin<Project> {
 
         project.tasks.register("removeSnapshotFromVersion") {
             group 'Release Tools'
-            description 'Remove the -SNAPSHOT suffix from the version number in build.gradle.'
+            description 'Remove the -SNAPSHOT suffix from the version number in the build script.'
             doLast {
+                def buildFile = resolveBuildFile()
                 buildFile.write(buildFile.getText().replaceAll(versionLineRegex, 'version = "$2"'))
             }
         }
@@ -109,6 +138,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Increment the patch number and add a -SNAPSHOT suffix if it does not exist.'
 
             doLast {
+                def buildFile = resolveBuildFile()
                 def text = buildFile.getText()
                 def matcher = text =~ versionLineRegex
                 def majorMinorVersion = matcher[0][3]
@@ -132,12 +162,12 @@ class GradleReleaseTools implements Plugin<Project> {
             }
 
             doLast {
-                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                def version = readVersion(resolveBuildFile())
                 def readme = project.file(readmeName)
                 readme.write(
                     readme.getText()
                     .replaceAll(
-                        /(['"]${pluginId}['"]\s+version\s+['"])[^']+(['"])/,
+                        /(\(?['"]${pluginId}['"]\)?\s+version\s+['"]).+?(['"])/,
                         '$1' + "${version}" + '$2'
                     )
                     .replaceAll(
@@ -159,7 +189,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Commits all changed files with a note that a release occured.'
 
             doLast {
-                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                def version = readVersion(resolveBuildFile())
                 sh "git commit --allow-empty -a -m '[grt] release v${version}' -m 'For the source code of the release bot see https://github.com/paginagmbh/Gradle-Release-Tools'"
             }
         }
@@ -175,7 +205,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Commits all changed files with a note that this is the next development version.'
 
             doLast {
-                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                def version = readVersion(resolveBuildFile())
                 sh "git commit --allow-empty -a -m '[grt] prepare for next development iteration (v${version})' -m 'For the source code of the release bot see https://github.com/paginagmbh/Gradle-Release-Tools'"
             }
         }
@@ -193,7 +223,7 @@ class GradleReleaseTools implements Plugin<Project> {
             description 'Creates a git tag for the current version – including SNAPSHOT'
 
             doLast {
-                def version = (buildFile.getText() =~ versionLineRegex)[0][1]
+                def version = readVersion(resolveBuildFile())
                 sh "git tag -f 'v${version}'"
             }
         }
