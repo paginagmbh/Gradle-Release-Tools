@@ -68,7 +68,7 @@ This plugin is simply listed together with the other Gradle plugins.
 plugins {
 	  ...
 
-    id 'gmbh.pagina.tools.gradle.release' version '1.3.0'
+    id 'gmbh.pagina.tools.gradle.release' version '1.3.1-SNAPSHOT'
 }
 ```
 
