@@ -10,8 +10,10 @@ class GradleReleaseTools implements Plugin<Project> {
 
         // Helper function, executes a shell command
         def sh = { String command ->
-            project.exec {
-                commandLine 'sh', '-c', command
+            def process = ['bash', '-c', command].execute()
+            def exitCode = process.waitFor()
+            if (exitCode != 0) {
+                throw new GradleException("Command failed: $command (exit code: $exitCode)")
             }
         }
 
