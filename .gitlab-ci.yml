@@ -63,6 +63,7 @@ git:release:
 git:preparesnapshot:
   extends: .gradle_template
   stage: release
+  needs: []
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:

@@ -38,6 +38,7 @@ This is done via
 git:preparesnapshot:
   extends: .gradle_template
   stage: release
+  needs: [] # this can run ASAP, a new development commit should even be created when all other jobs fail
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
